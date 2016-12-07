@@ -42,7 +42,7 @@
 @property (nonatomic, strong) NSSet * groups;
 @property (nonatomic, strong) XMPPResourceCoreDataStorageObject * primaryResource;
 @property (nonatomic, strong) NSSet * resources;
-
+@property (nonatomic,strong) NSNumber *onlineStatus;
 + (id)insertInManagedObjectContext:(NSManagedObjectContext *)moc
                            withJID:(XMPPJID *)jid
                   streamBareJidStr:(NSString *)streamBareJidStr;

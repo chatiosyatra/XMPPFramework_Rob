@@ -34,7 +34,7 @@
 
 @property (strong) NSString *messageEntityName;
 @property (strong) NSString *contactEntityName;
-
+@property (strong) NSDictionary *chatConfigDict;
 - (NSEntityDescription *)messageEntity:(NSManagedObjectContext *)moc;
 - (NSEntityDescription *)contactEntity:(NSManagedObjectContext *)moc;
 

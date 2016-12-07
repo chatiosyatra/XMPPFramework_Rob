@@ -20,7 +20,7 @@
 	BOOL clientSideMessageArchivingOnly;
 	NSXMLElement *preferences;
 }
-
+- (BOOL)shouldArchiveMessage:(XMPPMessage *)message outgoing:(BOOL)isOutgoing xmppStream:(XMPPStream *)xmppStream;
 - (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage;
 - (id)initWithMessageArchivingStorage:(id <XMPPMessageArchivingStorage>)storage dispatchQueue:(dispatch_queue_t)queue;
 

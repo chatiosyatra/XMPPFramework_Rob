@@ -30,7 +30,16 @@
 @property (nonatomic, strong) NSDate * timestamp;
 
 @property (nonatomic, strong) NSString * streamBareJidStr;
-
+@property (nonatomic, strong) NSString * toUserType;
+@property (nonatomic, strong) NSString * documentURL;
+@property (nonatomic, strong) NSString * documentType;
+@property (nonatomic, strong) NSString * chatID;
+@property (nonatomic, strong) NSString * msgId;
+@property (nonatomic, strong) NSNumber * notSent;
+@property (nonatomic, strong) NSNumber * delivered;
+@property (nonatomic, strong) NSNumber * displayed;
+@property (nonatomic, strong) NSNumber * unread;
+@property (nonatomic, strong) NSString * msgType;
 /**
  * This method is called immediately before the object is inserted into the managedObjectContext.
  * At this point, all normal properties have been set.

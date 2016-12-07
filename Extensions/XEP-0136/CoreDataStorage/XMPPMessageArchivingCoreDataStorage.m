@@ -3,6 +3,7 @@
 #import "XMPPLogging.h"
 #import "NSXMLElement+XEP_0203.h"
 #import "XMPPMessage+XEP_0085.h"
+#import "XMPPMessage+XEP_0280.h"
 
 #if ! __has_feature(objc_arc)
 #warning This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
@@ -57,6 +58,9 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 	
 	messageEntityName = @"XMPPMessageArchiving_Message_CoreDataObject";
 	contactEntityName = @"XMPPMessageArchiving_Contact_CoreDataObject";
+    
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"chat_plist" ofType:@"plist"];
+    self.chatConfigDict = [[NSDictionary alloc]initWithContentsOfFile:path];
 }
 
 /**
@@ -335,10 +339,47 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 {
 	// Message should either have a body, or be a composing notification
 	
+    if (![message isMessageWithBody]) {
+        return;
+    }
+    
+    
+    if([message isMessageCarbon])
+    {
+        if(![self isCarbonMessageAllowedForLOB:message])
+        {
+            return;
+        }
+    }
+    else
+    {
+        
+        if(![self isMessageAllowedForLOB:message])
+        {
+            return;
+        }
+    }
+    
 	NSString *messageBody = [[message elementForName:@"body"] stringValue];
+    NSString *chatId=[[[message elementForName:@"yatracustom"] elementForName:@"chatid"] stringValue];
+     NSString *url=[[[message elementForName:@"yatracustom"] elementForName:@"url"] stringValue];
+     NSString *contenttype=[[[message elementForName:@"yatracustom"] elementForName:@"contenttype"] stringValue];
+    NSString *msgtype=[[[message elementForName:@"yatracustom"] elementForName:@"msgtype"] stringValue];
+    NSString *msgId=[[message attributeForName:@"id"] stringValue];
 	BOOL isComposing = NO;
 	BOOL shouldDeleteComposingMessage = NO;
 	
+    NSString *localtime=[[[message elementForName:@"yatracustom"] elementForName:@"localtime"] stringValue];
+    NSTimeInterval time=[localtime longLongValue]/1000;
+    NSDate *messageTime=[NSDate dateWithTimeIntervalSince1970:time];
+    NSString *messageType=[[[message elementForName:@"yatracustom"] elementForName:@"msgtype"] stringValue];
+    
+    
+    if([messageType isEqualToString:@"chatRequest"])
+    {
+        return;
+    }
+    
 	if ([messageBody length] == 0)
 	{
 		// Message doesn't have a body.
@@ -403,10 +444,26 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 				
 				didCreateNewArchivedMessage = YES;
 			}
-			
+            
+//            if (archivedMessage.notSent.boolValue) {
+//                archivedMessage.notSent=[NSNumber numberWithBool:NO];
+//            }
+            if (!archivedMessage.outgoing.boolValue) {
+                archivedMessage.unread=[NSNumber numberWithBool:YES];
+            }
+            else
+            {
+                archivedMessage.unread=[NSNumber numberWithBool:NO];
+            }
+            
+            archivedMessage.msgType=msgtype;
+            archivedMessage.documentURL=url;
+            archivedMessage.documentType=contenttype;
+            archivedMessage.msgId=msgId;
+            archivedMessage.chatID=chatId;
 			archivedMessage.message = message;
 			archivedMessage.body = messageBody;
-			
+            archivedMessage.bareJidStr=[messageJid bare];
 			archivedMessage.bareJid = [messageJid bareJID];
 			archivedMessage.streamBareJidStr = [myJid bare];
 			
@@ -414,7 +471,7 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 			if (timestamp)
 				archivedMessage.timestamp = timestamp;
 			else
-				archivedMessage.timestamp = [[NSDate alloc] init];
+                archivedMessage.timestamp = messageTime;        //[[NSDate alloc] init];
 			
 			archivedMessage.thread = [[message elementForName:@"thread"] stringValue];
 			archivedMessage.isOutgoing = isOutgoing;
@@ -484,5 +541,87 @@ static XMPPMessageArchivingCoreDataStorage *sharedInstance;
 		}
 	}];
 }
+
+
+- (BOOL)isArchivedMessageFromServer:(XMPPMessage*)message
+{
+    NSXMLElement *receiptRequest = [message elementForName:@"archived" xmlns:@"urn:xmpp:mam:tmp"];
+    
+    return (receiptRequest != nil);
+}
+
+-(BOOL)isMessageAllowedForLOB:(XMPPMessage*)message
+{
+    NSString *lobid = [[[message elementForName:@"yatracustom"] elementForName:@"lobid"] stringValue];
+    NSString *receiverRole = [[[message elementForName:@"yatracustom"] elementForName:@"receiverrole"] stringValue];
+    
+    
+    NSArray *lobssupported=[self.chatConfigDict objectForKey:@"LOBIDs"];
+    
+    
+    
+    
+    if(![lobssupported containsObject:lobid])
+    {
+        return NO;
+    }
+    
+    
+    BOOL customerchatonlysupported=[[self.chatConfigDict objectForKey:@"chatAsCustomer"] boolValue];
+    BOOL vendorchatonlysupported=[[self.chatConfigDict objectForKey:@"chatAsVendor"] boolValue];
+    //if chat app is B2C app then messages with customer jid only are received,others are discarded
+    if (customerchatonlysupported && !vendorchatonlysupported) {
+        if([receiverRole caseInsensitiveCompare:@"UT_CUST"] != NSOrderedSame ) {
+            return NO;
+        }
+    }
+    
+    if (!customerchatonlysupported && vendorchatonlysupported) {
+        if([receiverRole caseInsensitiveCompare:@"UT_VEND"] != NSOrderedSame ) {
+            return NO;
+        }
+    }
+    
+    return YES;
+    
+    
+}
+-(BOOL)isCarbonMessageAllowedForLOB:(XMPPMessage*)message
+{
+    NSString *lobid = [[[message elementForName:@"yatracustom"] elementForName:@"lobid"] stringValue];
+    NSString *senderRole = [[[message elementForName:@"yatracustom"] elementForName:@"senderrole"] stringValue];
+    
+    NSArray *lobssupported=[self.chatConfigDict objectForKey:@"LOBIDs"];
+    
+    
+    
+    
+    if(![lobssupported containsObject:lobid])
+    {
+        return NO;
+    }
+    
+    
+    BOOL customerchatonlysupported=[[self.chatConfigDict objectForKey:@"chatAsCustomer"] boolValue];
+    BOOL vendorchatonlysupported=[[self.chatConfigDict objectForKey:@"chatAsVendor"] boolValue];
+    //if chat app is B2C app then messages with customer jid only are received,others are discarded
+    if (customerchatonlysupported && !vendorchatonlysupported) {
+        if([senderRole caseInsensitiveCompare:@"UT_CUST"] != NSOrderedSame ) {
+            return NO;
+        }
+    }
+    
+    if (!customerchatonlysupported && vendorchatonlysupported) {
+        if([senderRole caseInsensitiveCompare:@"UT_VEND"] != NSOrderedSame ) {
+            return NO;
+        }
+    }
+    
+    return YES;
+    
+    
+}
+
+
 
 @end

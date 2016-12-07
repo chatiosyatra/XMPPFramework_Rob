@@ -414,7 +414,7 @@
 	
 	if ([self shouldArchiveMessage:message outgoing:YES xmppStream:sender])
 	{
-		[xmppMessageArchivingStorage archiveMessage:message outgoing:YES xmppStream:sender];
+		//[xmppMessageArchivingStorage archiveMessage:message outgoing:YES xmppStream:sender];
 	}
 }
 

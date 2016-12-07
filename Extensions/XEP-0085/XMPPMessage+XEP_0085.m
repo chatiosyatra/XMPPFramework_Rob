@@ -26,7 +26,8 @@ static NSString *const xmlns_chatstates = @"http://jabber.org/protocol/chatstate
 }
 
 - (BOOL)hasPausedChatState
-{
+//dp is typing issue
+{      //return ([self elementForName:@"active" xmlns:xmlns_chatstates] != nil);
 	return ([self elementForName:@"paused" xmlns:xmlns_chatstates] != nil);
 }
 

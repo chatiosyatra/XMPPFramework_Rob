@@ -252,6 +252,11 @@ static NSMutableSet *databaseFileNames;
     
     willSaveManagedObjectContextBlocks = [[NSMutableArray alloc] init];
     didSaveManagedObjectContextBlocks = [[NSMutableArray alloc] init];
+    
+    
+    
+    
+    
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self
 	                                         selector:@selector(updateJidCache:)
@@ -716,7 +721,7 @@ static NSMutableSet *databaseFileNames;
 			    [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
 		else
 			mainThreadManagedObjectContext = [[NSManagedObjectContext alloc] init];
-		
+		[mainThreadManagedObjectContext setMergePolicy:NSMergeByPropertyObjectTrumpMergePolicy];
 		mainThreadManagedObjectContext.persistentStoreCoordinator = coordinator;
 		mainThreadManagedObjectContext.undoManager = nil;
 		
@@ -731,6 +736,38 @@ static NSMutableSet *databaseFileNames;
 	
 	return mainThreadManagedObjectContext;
 }
+
+
+- (NSManagedObjectContext *)privateManagedObjectContext
+{    
+    if (privateManagedObjectContext)
+    {
+        return privateManagedObjectContext;
+    }
+    
+    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
+    if (coordinator)
+    {
+        XMPPLogVerbose(@"%@: Creating privateManagedObjectContext", [self class]);
+        
+        if ([NSManagedObjectContext instancesRespondToSelector:@selector(initWithConcurrencyType:)])
+            privateManagedObjectContext =
+            [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        else
+            privateManagedObjectContext = [[NSManagedObjectContext alloc] init];
+        
+        privateManagedObjectContext.persistentStoreCoordinator = coordinator;
+        privateManagedObjectContext.undoManager = nil;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(managedObjectContextDidSave:)
+                                                     name:NSManagedObjectContextDidSaveNotification
+                                                   object:nil];
+    }
+    
+    return privateManagedObjectContext;
+}
+
 
 - (void)managedObjectContextDidSave:(NSNotification *)notification
 {

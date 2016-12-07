@@ -59,6 +59,7 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
 @dynamic primaryResource;
 @dynamic resources;
 
+@dynamic onlineStatus;
 - (XMPPJID *)jid
 {
   // Create and cache the jid on demand

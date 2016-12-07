@@ -154,6 +154,9 @@ static const int xmppLogLevel = XMPP_LOG_LEVEL_WARN;
             XMPPIQ *iq = [XMPPIQ iqWithType:@"set" elementID:elementID];
             [iq setXmlns:@"jabber:client"];
             
+            [iq addAttributeWithName:@"from" stringValue:xmppStream.myJID.bare];
+           
+            
             NSXMLElement *enable = [NSXMLElement elementWithName:@"enable" xmlns:XMLNS_XMPP_MESSAGE_CARBONS];
             [iq addChild:enable];
             

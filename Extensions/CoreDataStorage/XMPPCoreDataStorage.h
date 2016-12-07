@@ -48,6 +48,7 @@
 	NSPersistentStoreCoordinator *persistentStoreCoordinator;
 	NSManagedObjectContext *managedObjectContext;
 	NSManagedObjectContext *mainThreadManagedObjectContext;
+    NSManagedObjectContext *privateManagedObjectContext;
     
     NSMutableArray *willSaveManagedObjectContextBlocks;
     NSMutableArray *didSaveManagedObjectContextBlocks;
@@ -139,7 +140,7 @@
  * and configured to automatically merge changesets from other threads.
 **/
 @property (strong, readonly) NSManagedObjectContext *mainThreadManagedObjectContext;
-
+@property (strong, readonly) NSManagedObjectContext *privateManagedObjectContext;
 /**
  * The Previous Database File is removed before creating a persistant store.
  *

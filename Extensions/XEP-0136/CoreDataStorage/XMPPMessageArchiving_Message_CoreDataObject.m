@@ -23,7 +23,16 @@
 @dynamic composing;
 @dynamic timestamp;
 @dynamic streamBareJidStr;
-
+@dynamic chatID;
+@dynamic msgId;
+@dynamic notSent;
+@dynamic displayed;
+@dynamic delivered;
+@dynamic documentURL;
+@dynamic documentType;
+@dynamic unread;
+@dynamic msgType;
+@dynamic toUserType;
 #pragma mark Transient message
 
 - (XMPPMessage *)message
